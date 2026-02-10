@@ -11,7 +11,7 @@ Official implementation of the paper **"Causal Schrödinger Bridges: Constrained
 
 ---
 
-## ⚡ Design Philosophy: The "<150 Lines" Implementation
+## ⚡ Design Philosophy: The "<200 Lines" Implementation
 
 > **"Simplicity is the ultimate sophistication."**
 

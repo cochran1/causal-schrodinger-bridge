@@ -44,7 +44,7 @@ Generative modeling typically seeks the path of least action (Optimal Transport)
 
 This work (CSB) complements our other research on generative causal inference. The choice of method depends on the **topological structure** of your data manifold:
 
-| Scenario Feature | **CSB (This Repo)** | **Causal Round Trip (JMLR)** |
+| Scenario Feature | **CSB (This Repo)** | **Causal Round Trip ** |
 | :--- | :--- | :--- |
 | **Support Topology** | **Disconnected / Voids** | **Connected Support** |
 | **Core Mechanism** | Entropic OT (SDE) | Analytical Invertible Flow (ODE) |

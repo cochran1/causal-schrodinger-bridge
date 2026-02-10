@@ -40,11 +40,26 @@ Generative modeling typically seeks the path of least action (Optimal Transport)
 
 ---
 
+##  Scenario Guide: Connected vs. Disconnected Support
+
+This work (CSB) complements our other research on generative causal inference. The choice of method depends on the **topological structure** of your data manifold:
+
+| Scenario Feature | **CSB (This Repo)** | **Causal Round Trip (JMLR)** |
+| :--- | :--- | :--- |
+| **Support Topology** | **Disconnected / Voids** | **Connected Support** |
+| **Core Mechanism** | Entropic OT (SDE) | Analytical Invertible Flow (ODE) |
+| **Key Advantage** | **Robust Tunneling** | **Zero Reconstruction Error** |
+| **Reference** | [arXiv:2602.08535](https://arxiv.org/abs/2602.08535) | [arXiv:2511.05236](https://arxiv.org/abs/2511.05236) |
+
+> **Recommendation:** If your factual and counterfactual distributions are separated by low-density regions (Support Mismatch), use **CSB** to robustly "tunnel" through the void.
+
+---
+
 ##  Installation
 
 1.  **Clone the repository**
     ```bash
-    git clone [https://github.com/cochran1/causal-schrodinger-bridge.git](https://github.com/your-username/causal-schrodinger-bridge.git)
+    git clone [https://github.com/cochran1/causal-schrodinger-bridge.git](https://github.com/cochran1/causal-schrodinger-bridge.git)
     cd causal-schrodinger-bridge
     ```
 

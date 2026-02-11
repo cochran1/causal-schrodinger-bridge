@@ -45,7 +45,7 @@ def solve_sde_csb(model, x0, steps=100, diffusion_scale=1.5):
         xt = xt + v * dt + noise 
         
     return xt # The "Tunneled" Counterfactual Distribution
-
+```
 ---
 
 ##  Overview

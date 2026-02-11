@@ -23,7 +23,7 @@ While this repository contains the full experiments for the paper, we provide a 
 
 ---
 
-## ⚡ Core Logic: SDE Tunneling in 5 Lines
+##  Core Logic: SDE Tunneling in 5 Lines
 
 > **"Adding entropy to save the soul of causality from deterministic collapse."**
 

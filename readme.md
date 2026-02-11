@@ -23,6 +23,31 @@ While this repository contains the full experiments for the paper, we provide a 
 
 ---
 
+## ⚡ Core Logic: SDE Tunneling in 5 Lines
+
+> **"Adding entropy to save the soul of causality from deterministic collapse."**
+
+While standard Flow Matching (ODE) collapses into a single mean path in high-dimensional voids, the **Causal Schrödinger Bridge (CSB)** leverages controlled diffusion to recover the full counterfactual distribution.
+
+```python
+# SDE Inference with CSB
+@torch.no_grad()
+def solve_sde_csb(model, x0, steps=100, diffusion_scale=1.5):
+    dt = 1.0 / steps
+    xt = x0.clone()
+    
+    for i in range(steps):
+        t = torch.tensor([i / steps]).to(device)
+        v = model(t, xt) # Learned Vector Field
+        
+        # Adding entropy to save the soul of causality from deterministic collapse
+        noise = torch.randn_like(xt) * np.sqrt(dt) * diffusion_scale
+        xt = xt + v * dt + noise 
+        
+    return xt # The "Tunneled" Counterfactual Distribution
+
+---
+
 ##  Overview
 
 <p align="center">

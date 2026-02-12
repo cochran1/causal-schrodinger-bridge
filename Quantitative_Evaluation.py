@@ -54,6 +54,8 @@ class ConditionalVectorField(nn.Module):
             nn.SiLU(),
             nn.Linear(512, 512),
             nn.SiLU(),
+            nn.Linear(512, 512),
+            nn.SiLU(),
             nn.Linear(512, dim_x)
         ).to(device)
     
@@ -62,33 +64,46 @@ class ConditionalVectorField(nn.Module):
         return self.net(inp)
 
 @torch.no_grad()
-def ode_solve(model, x0, context, steps=50, reverse=False):
+def solve_csb_sde(model, x0, context, steps=50, diffusion_scale=0.0, reverse=False):
     dt = 1.0 / steps
-    if reverse: dt = -dt; t_grid = torch.linspace(1.0, 0.0, steps+1).to(device)
-    else: t_grid = torch.linspace(0.0, 1.0, steps+1).to(device)
     
-    x = x0
+    if reverse:
+        dt = -dt
+        t_grid = torch.linspace(1.0, 0.0, steps+1).to(device)
+    else:
+        t_grid = torch.linspace(0.0, 1.0, steps+1).to(device)
+    
+    x = x0.clone()
     for i in range(steps):
         t = t_grid[i].view(1, 1).repeat(x.shape[0], 1)
         v = model(t, x, context)
-        x = x + v * dt
+        
+        if not reverse and diffusion_scale > 0:
+            brownian_noise = torch.randn_like(x) * np.sqrt(abs(dt)) * diffusion_scale
+            x = x + v * dt + brownian_noise
+        else:
+            x = x + v * dt
+            
     return x
 
-def train_model(train_loader):
+def train_model(train_loader, train_sigma=0.1):
     model = ConditionalVectorField(784, 1)
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     model.train()
     
-    print("Step 1: Training Model (P(X|T))...")
+    print(f"Step 1: Training Model (P(X|T)) with Robust CFM (sigma={train_sigma})...")
     for epoch in range(15): 
         total_loss = 0
         for t_val, x_val in train_loader:
-            t = torch.rand(x_val.shape[0], 1).to(device)
+            b_size = x_val.shape[0]
+            t = torch.rand(b_size, 1).to(device)
             x0 = torch.randn_like(x_val).to(device)
             x1 = x_val.to(device)
             context = t_val.to(device)
             
-            x_t = (1 - t) * x0 + t * x1
+            noise = torch.randn_like(x_val).to(device) * train_sigma
+            x_t = (1 - t) * x0 + t * x1 + noise
+            
             target_v = x1 - x0
             pred_v = model(t, x_t, context)
             loss = torch.mean((pred_v - target_v)**2)
@@ -106,7 +121,7 @@ def evaluate():
     train_loader = DataLoader(train_ds, batch_size=128, shuffle=True)
     test_loader = DataLoader(test_ds, batch_size=200, shuffle=False)
     
-    model = train_model(train_loader)
+    model = train_model(train_loader, train_sigma=0.1)
     
     print("\nStep 2: Quantitative Evaluation on Test Set...")
     
@@ -120,15 +135,15 @@ def evaluate():
     for t_obs, x_obs in test_loader:
         t_obs = t_obs.to(device)
         x_obs = x_obs.to(device)
-        batch_size = x_obs.shape[0]
         
         t_target = torch.full_like(t_obs, target_t_val)
         
         z_rand = torch.randn_like(x_obs)
-        x_baseline = ode_solve(model, z_rand, context=t_target, reverse=False)
+        x_baseline = solve_csb_sde(model, z_rand, context=t_target, reverse=False, diffusion_scale=0.0)
         
-        u_x = ode_solve(model, x_obs, context=t_obs, reverse=True)
-        x_csb = ode_solve(model, u_x, context=t_target, reverse=False)
+        u_x = solve_csb_sde(model, x_obs, context=t_obs, reverse=True, diffusion_scale=0.0)
+        
+        x_csb = solve_csb_sde(model, u_x, context=t_target, reverse=False, diffusion_scale=0.5)
         
         def calc_thickness(img_batch):
             return (img_batch.mean(dim=1, keepdim=True) - T_mean) / T_std

@@ -27,16 +27,16 @@ While this repository contains the full experiments for the paper, we provide a 
 
 > **"If the theory is elegant enough, complexity is but a computational illusion."**
 
-[cite_start]While general Schrödinger Bridge solvers suffer from the curse of dimensionality $O(\exp(d))$, **CSB** leverages the **Structural Decomposition Theorem (Theorem 1)** to bypass global optimization[cite: 58, 96]. We demonstrate this by performing "causal surgery" on a 1000-dimensional manifold—a scale where standard entropic OT methods typically fail to converge.
+While general Schrödinger Bridge solvers suffer from the curse of dimensionality $O(\exp(d))$, **CSB** leverages the **Structural Decomposition Theorem (Theorem 1)** to bypass global optimization. We demonstrate this by performing "causal surgery" on a 1000-dimensional manifold—a scale where standard entropic OT methods typically fail to converge.
 
 ###  Performance & Scaling Report (1000-D)
 
 | Metric | ODE (Baseline) | **CSB (Ours)** | Insight |
 | :--- | :---: | :---: | :--- |
-| **Total Training Time** | 13.87s | **13.65s** | [cite_start]**Linear Scaling**: Factorization avoids exponential costs[cite: 121]. |
+| **Total Training Time** | 13.87s | **13.65s** | **Linear Scaling**: Factorization avoids exponential costs. |
 | **Batch Inference Time** | 0.058s | **0.060s** | Stochasticity adds near-zero overhead. |
-| **Support Coverage** ↑ | 0.825 | **1.008** | [cite_start]**Tunneling Success**: SDE prevents mode collapse in voids[cite: 196]. |
-| **Mechanism Leakage** ↓ | **0.031** | 0.190 | [cite_start]The trade-off for robust coverage over rigid precision[cite: 143]. |
+| **Support Coverage** ↑ | 0.825 | **1.008** | **Tunneling Success**: SDE prevents mode collapse in voids. |
+| **Mechanism Leakage** ↓ | **0.031** | 0.190 | The trade-off for robust coverage over rigid precision. |
 
 ---
 

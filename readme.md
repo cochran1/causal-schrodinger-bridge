@@ -35,19 +35,20 @@ While standard Flow Matching (ODE) collapses into a single mean path in high-dim
 def solve_sde_csb(model, x0, steps=100, diffusion_scale=1.0):
     dt = 1.0 / steps
     xt = x0.clone()
-    traj = [xt.cpu().numpy()]
     
     for i in range(steps):
         t = torch.tensor([i / steps]).to(device).expand(x0.shape[0], 1)
         
+        # 1. Deterministic Drift (The Vector Field)
         v = model(t, xt)
-        # Adding entropy to save the soul of causality from deterministic collapse
+        
+        # 2. Adding entropy to save the soul of causality from deterministic collapse
         brownian_noise = torch.randn_like(xt) * np.sqrt(dt) * diffusion_scale
         
+        # 3. Update State (Tunneling)
         xt = xt + v * dt + brownian_noise
-        traj.append(xt.cpu().numpy())
         
-    return np.array(traj)# The "Tunneled" Counterfactual Distribution
+    return xt # The "Tunneled" Counterfactual Distribution
 ```
 ---
 

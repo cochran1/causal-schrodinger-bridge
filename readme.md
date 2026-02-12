@@ -204,7 +204,7 @@ Task: Intervene on a thin digit ($T \approx -2.5$) to make it thick ($do(T=2.5\s
 If you find this code or paper useful, please cite:
 
 ```bibtex
-@article{wu2025causal,
+@article{wu2026causal,
   title={Causal Schrödinger Bridges: Constrained Optimal Transport on Structural Manifolds},
   author={Wu, Rui and Li, Yongjun},
   journal={arXiv preprint arXiv:2602.08535},

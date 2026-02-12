@@ -7,8 +7,10 @@ from torch.utils.data import DataLoader, TensorDataset
 import matplotlib.pyplot as plt
 import numpy as np
 
+plt.switch_backend('Agg')
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f"MNIST Experiment on: {device}")
+print(f"Device: {device}")
 
 def get_mnist_data(batch_size=256):
     transform = transforms.Compose([
@@ -24,7 +26,6 @@ def get_mnist_data(batch_size=256):
     X = data.view(data.shape[0], -1).to(device) 
     
     T = X.mean(dim=1, keepdim=True) 
-    
     T = (T - T.mean()) / T.std()
     
     return TensorDataset(T, X) 
@@ -46,10 +47,9 @@ class ConditionalVectorField(nn.Module):
         inp = torch.cat([x, t, context], dim=1)
         return self.net(inp)
 
-def train(model, dataloader, epochs=20):
+def train(model, dataloader, epochs=20, train_sigma=0.1):
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     model.train()
-    print("Training MNIST Bridge...")
     
     for epoch in range(epochs):
         total_loss = 0
@@ -60,7 +60,9 @@ def train(model, dataloader, epochs=20):
             x1 = x_val.to(device)
             context = t_val.to(device) 
             
-            x_t = (1 - t) * x0 + t * x1
+            noise = torch.randn_like(x_val).to(device) * train_sigma
+            x_t = (1 - t) * x0 + t * x1 + noise
+            
             target_v = x1 - x0
             
             pred_v = model(t, x_t, context)
@@ -71,20 +73,29 @@ def train(model, dataloader, epochs=20):
             optimizer.step()
             total_loss += loss.item()
             
-        print(f"  Epoch {epoch+1}: Loss {total_loss/len(dataloader):.4f}")
+        print(f"Epoch {epoch+1}: Loss {total_loss/len(dataloader):.4f}")
 
 @torch.no_grad()
-def ode_solve(model, x0, context, reverse=False):
-    steps = 50
+def solve_csb_sde(model, x0, context, steps=50, diffusion_scale=0.0, reverse=False):
     dt = 1.0 / steps
-    if reverse: dt = -dt; t_grid = torch.linspace(1.0, 0.0, steps+1).to(device)
-    else: t_grid = torch.linspace(0.0, 1.0, steps+1).to(device)
     
-    x = x0
+    if reverse:
+        dt = -dt
+        t_grid = torch.linspace(1.0, 0.0, steps+1).to(device)
+    else:
+        t_grid = torch.linspace(0.0, 1.0, steps+1).to(device)
+    
+    x = x0.clone()
     for i in range(steps):
         t = t_grid[i].view(1, 1).repeat(x.shape[0], 1)
         v = model(t, x, context)
-        x = x + v * dt
+        
+        if not reverse and diffusion_scale > 0:
+            brownian_noise = torch.randn_like(x) * np.sqrt(abs(dt)) * diffusion_scale
+            x = x + v * dt + brownian_noise
+        else:
+            x = x + v * dt
+            
     return x
 
 def main():
@@ -92,42 +103,40 @@ def main():
     loader = DataLoader(dataset, batch_size=256, shuffle=True)
     
     model_X = ConditionalVectorField(784, 1)
-    train(model_X, loader, epochs=30) 
     
-    print("Performing Intervention...")
+    train(model_X, loader, epochs=30, train_sigma=0.1) 
     
     all_t, all_x = dataset.tensors
-    idx = torch.argmin(all_t)
+    idx = torch.argmin(all_t) 
     x_obs = all_x[idx:idx+1].to(device)
     t_obs = all_t[idx:idx+1].to(device)
     
-    print(f"Fact Thickness: {t_obs.item():.2f}")
-    
-    u_x = ode_solve(model_X, x_obs, context=t_obs, reverse=True)
+    u_x = solve_csb_sde(model_X, x_obs, context=t_obs, reverse=True, diffusion_scale=0.0)
     
     t_intervened = torch.tensor([[2.5]]).to(device) 
     
-    x_cf = ode_solve(model_X, u_x, context=t_intervened, reverse=False)
+    x_cf = solve_csb_sde(model_X, u_x, context=t_intervened, reverse=False, diffusion_scale=0.15)
     
-    plt.figure(figsize=(8, 4))
+    plt.figure(figsize=(10, 4), dpi=300)
     
-    plt.subplot(1, 3, 1)
-    plt.imshow(x_obs.cpu().view(28, 28).numpy(), cmap='gray')
-    plt.title(f"Fact (Thin)\nT={t_obs.item():.2f}")
-    plt.axis('off')
+    def show_img(ax, img_tensor, title):
+        img = img_tensor.cpu().view(28, 28).numpy()
+        img = (img - img.min()) / (img.max() - img.min() + 1e-8)
+        ax.imshow(img, cmap='gray', vmin=0, vmax=1, interpolation='nearest')
+        ax.set_title(title, fontsize=12, fontweight='bold')
+        ax.axis('off')
+
+    ax1 = plt.subplot(1, 3, 1)
+    show_img(ax1, x_obs, f"Factual\nIntensity={x_obs.mean():.2f}")
     
-    plt.subplot(1, 3, 2)
-    plt.imshow(u_x.cpu().view(28, 28).numpy(), cmap='gray')
-    plt.title("Abducted Latent\n(Style/Id)")
-    plt.axis('off')
+    ax2 = plt.subplot(1, 3, 2)
+    show_img(ax2, u_x, "Latent")
     
-    plt.subplot(1, 3, 3)
-    plt.imshow(x_cf.cpu().view(28, 28).numpy(), cmap='gray')
-    plt.title(f"Counterfactual (Thick)\ndo(T={t_intervened.item():.1f})")
-    plt.axis('off')
+    ax3 = plt.subplot(1, 3, 3)
+    show_img(ax3, x_cf, f"Counterfactual")
     
-    plt.savefig('mnist_counterfactual.png')
-    print("Saved mnist_counterfactual.png")
+    plt.tight_layout()
+    plt.savefig('mnist_counterfactual_sharp.png')
 
 if __name__ == "__main__":
     main()

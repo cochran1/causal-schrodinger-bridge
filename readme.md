@@ -160,21 +160,20 @@ python Robustness.py
 
 ---
 
-##  Results
+##  Empirical Results
 
-### Mechanism Disentanglement
-CSB successfully disentangles the causal mechanism (thickness) from the nuisance factor (style/identity), whereas standard baselines fail to preserve identity.
+### Mechanism Disentanglement (Morpho-MNIST)
 
-| Method | MAE $\downarrow$ | SSIM $\uparrow$ | L2 Dist $\downarrow$ |
+Task: Intervene on a thin digit ($T \approx -2.5$) to make it thick ($do(T=2.5\sigma)$) while strictly preserving its unique writing style (identity).
+
+| Method | **Control Precision** <br> (MAE $\downarrow$) | **Identity Preservation** <br> (SSIM $\uparrow$) | **Transport Cost** <br> (L2 Dist $\downarrow$) |
 | :--- | :---: | :---: | :---: |
-| Baseline (Standard OT) | 0.465 | 0.068 | 1.202 |
-| **CSB (Ours)** | **0.069** | **0.306** | **0.116** |
+| Baseline (Standard CFM) | 0.495 | 0.068 | 1.375 |
+| **CSB (Hybrid Solver)** | **0.299** | **0.219** | **0.379** |
 
 <p align="center">
-<img src="mnist_counterfactual.png" width="600">
+  <img src="mnist_counterfactual.png" width="800" alt="Counterfactual Generation">
 </p>
-
----
 
 ##  Citation
 

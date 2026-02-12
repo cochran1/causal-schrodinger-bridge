@@ -15,6 +15,10 @@ np.random.seed(42)
 plt.rcParams['font.family'] = 'serif'
 sns.set_theme(style="whitegrid", font="serif")
 
+print(f"CSB 1000-D Causal Surgical Experiment")
+print(f"Running on: {device} | Status: High-Dim Stress Test")
+print("-" * 60)
+
 def get_causal_surgical_data(n_samples=5000, input_dim=1000):
     z0, _ = make_moons(n_samples=n_samples, noise=0.05)
     z0[:, 1] = z0[:, 1] * 2.0 - 3.0 
@@ -48,12 +52,13 @@ class CausalVectorField(nn.Module):
         t_embed = t.view(-1, 1).expand(x.shape[0], 1)
         return self.net(torch.cat([x, t_embed], dim=1))
 
-def train_csb(model, x0, x1, steps=5000, train_sigma=0.2):
+def train_model(model, x0, x1, name="Model", train_sigma=0.2):
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     model.train()
-    start_time = time.time()
+    start_t = time.time()
     
-    for step in range(steps):
+    print(f"   Training {name} (dim=1000)...")
+    for step in range(5000):
         idx = torch.randperm(len(x0))[:512]
         b0, b1 = x0[idx], x1[idx]
         t = torch.rand(len(b0), 1).to(device)
@@ -61,18 +66,13 @@ def train_csb(model, x0, x1, steps=5000, train_sigma=0.2):
         noise = torch.randn_like(b0) * train_sigma
         x_t = (1 - t) * b0 + t * b1 + noise
         
-        target_v = b1 - b0
-        pred_v = model(t, x_t)
-        loss = torch.mean((pred_v - target_v)**2)
+        loss = torch.mean((model(t, x_t) - (b1 - b0))**2)
+        optimizer.zero_grad(); loss.backward(); optimizer.step()
         
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        
-    return time.time() - start_time
+    return time.time() - start_t
 
 @torch.no_grad()
-def evaluate_all(model, x0, z1_gt, proj, steps=100):
+def evaluate_all(model_ode, model_csb, x0, z1_gt, proj, steps=100):
     proj_pinv = np.linalg.pinv(proj)
     
     def get_metrics(res_x):
@@ -87,7 +87,7 @@ def evaluate_all(model, x0, z1_gt, proj, steps=100):
     dt = 1.0 / steps
     for i in range(steps):
         t = torch.tensor([i/steps]).to(device).expand(len(x0), 1)
-        xt_ode += model(t, xt_ode) * dt
+        xt_ode += model_ode(t, xt_ode) * dt
     dt_ode = time.time() - t0_ode
     z_ode, mse_ode, sup_ode, leak_ode = get_metrics(xt_ode.cpu().numpy())
 
@@ -97,7 +97,7 @@ def evaluate_all(model, x0, z1_gt, proj, steps=100):
     for i in range(steps):
         t = torch.tensor([i/steps]).to(device).expand(len(x0), 1)
         noise = torch.randn_like(xt_sde) * np.sqrt(dt) * diffusion_scale
-        xt_sde += model(t, xt_sde) * dt + noise
+        xt_sde += model_csb(t, xt_sde) * dt + noise
     dt_sde = time.time() - t0_sde
     z_sde, mse_sde, sup_sde, leak_sde = get_metrics(xt_sde.cpu().numpy())
 
@@ -111,31 +111,33 @@ def evaluate_all(model, x0, z1_gt, proj, steps=100):
 
 def main():
     X0, X1, Z1_GT, PROJ = get_causal_surgical_data()
-    model = CausalVectorField(1000).to(device)
     
-    train_time = train_csb(model, X0, X1)
-    metrics = evaluate_all(model, X0[:2000], Z1_GT[:2000], PROJ)
+    model_ode = CausalVectorField(1000).to(device)
+    model_csb = CausalVectorField(1000).to(device)
+    
+    time_ode = train_model(model_ode, X0, X1, name="Standard Flow (ODE)", train_sigma=0.0)
+    time_csb = train_model(model_csb, X0, X1, name="Causal Bridge (CSB)", train_sigma=0.2)
+    
+    res = evaluate_all(model_ode, model_csb, X0[:2000], Z1_GT[:2000], PROJ)
 
+    print("\n" + " PERFORMANCE & SCALING REPORT (1000-D) ".center(70, "="))
     print(f"{'Metric':<25} | {'ODE (Baseline)':<18} | {'CSB (Ours)':<18}")
-    print("-" * 65)
-    print(f"{'Inference Time':<25} | {metrics['time'][0]:<18.4f}s | {metrics['time'][1]:<18.4f}s")
-    print(f"{'Latent Recovery MSE':<25} | {metrics['mse'][0]:<18.6f} | {metrics['mse'][1]:<18.6f}")
-    print(f"{'Support Coverage':<25} | {metrics['sup'][0]:<18.4f} | {metrics['sup'][1]:<18.4f}")
-    print(f"{'Mechanism Leakage':<25} | {metrics['leak'][0]:<18.6f} | {metrics['leak'][1]:<18.6f}")
-    
-    z_ode, z_sde = metrics['latent_plots']
-    fig, axes = plt.subplots(1, 2, figsize=(15, 6), dpi=150)
-    
-    axes[0].scatter(Z1_GT[:, 0], Z1_GT[:, 1], c='#BDC3C7', alpha=0.3, s=10, label='Ground Truth')
+    print("-" * 70)
+    print(f"{'Total Training Time':<25} | {time_ode:<18.2f}s | {time_csb:<18.2f}s")
+    print(f"{'Batch Inference Time':<25} | {res['time'][0]:<18.4f}s | {res['time'][1]:<18.4f}s")
+    print(f"{'Support Coverage':<25} | {res['sup'][0]:<18.4f} | {res['sup'][1]:<18.4f}")
+    print(f"{'Mechanism Leakage':<25} | {res['leak'][0]:<18.6f} | {res['leak'][1]:<18.6f}")
+    print("=" * 70)
+
+    z_ode, z_sde = res['latent_plots']
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6), dpi=200)
+    axes[0].scatter(Z1_GT[:2000, 0], Z1_GT[:2000, 1], c='#BDC3C7', alpha=0.3, s=10, label='Ground Truth')
     axes[0].scatter(z_ode[:, 0], z_ode[:, 1], c='#E91E63', alpha=0.6, s=10, label='ODE (Collapsed)')
     axes[0].set_title("ODE: Rigid Path (Information Loss)", fontweight='bold')
-    axes[0].legend()
-
-    axes[1].scatter(Z1_GT[:, 0], Z1_GT[:, 1], c='#BDC3C7', alpha=0.3, s=10, label='Ground Truth')
-    axes[1].scatter(z_sde[:, 0], z_sde[:, 1], c='#009688', alpha=0.6, s=10, label='CSB: Stochastic Tunneling')
+    
+    axes[1].scatter(Z1_GT[:2000, 0], Z1_GT[:2000, 1], c='#BDC3C7', alpha=0.3, s=10, label='Ground Truth')
+    axes[1].scatter(z_sde[:, 0], z_sde[:, 1], c='#009688', alpha=0.6, s=10, label='CSB (Stochastic Tunneling)')
     axes[1].set_title("CSB: Entropy-Regularized (Robust Recovery)", fontweight='bold')
-    axes[1].legend()
-
     plt.tight_layout()
     plt.show()
 

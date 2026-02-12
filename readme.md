@@ -23,6 +23,23 @@ While this repository contains the full experiments for the paper, we provide a 
 
 ---
 
+##  Scaling to the Edge: 1000-D Causal Surgery
+
+> **"If the theory is elegant enough, complexity is but a computational illusion."**
+
+[cite_start]While general Schrödinger Bridge solvers suffer from the curse of dimensionality $O(\exp(d))$, **CSB** leverages the **Structural Decomposition Theorem (Theorem 1)** to bypass global optimization[cite: 58, 96]. We demonstrate this by performing "causal surgery" on a 1000-dimensional manifold—a scale where standard entropic OT methods typically fail to converge.
+
+###  Performance & Scaling Report (1000-D)
+
+| Metric | ODE (Baseline) | **CSB (Ours)** | Insight |
+| :--- | :---: | :---: | :--- |
+| **Total Training Time** | 13.87s | **13.65s** | [cite_start]**Linear Scaling**: Factorization avoids exponential costs[cite: 121]. |
+| **Batch Inference Time** | 0.058s | **0.060s** | Stochasticity adds near-zero overhead. |
+| **Support Coverage** ↑ | 0.825 | **1.008** | [cite_start]**Tunneling Success**: SDE prevents mode collapse in voids[cite: 196]. |
+| **Mechanism Leakage** ↓ | **0.031** | 0.190 | [cite_start]The trade-off for robust coverage over rigid precision[cite: 143]. |
+
+---
+
 ##  Core Logic: SDE Tunneling
 
 > **"Adding entropy to save the soul of causality from deterministic collapse."**
@@ -113,7 +130,8 @@ This work (CSB) complements our other research on generative causal inference. T
 ├── toy_causal.py               
 ├── mnist_experiment.py         
 ├── Quantitative_Evaluation.py  
-├── Robustness.py               
+├── Robustness.py
+├── 1000_dim_surgical.py     
 ├── baseline.py                 
 ├── plot.py / sde_plot.py   
 ├── ot_plot.py 
@@ -156,6 +174,12 @@ python Quantitative_Evaluation.py
 To test the model's sensitivity to graph misspecification:
 ```bash
 python Robustness.py
+```
+
+### 5. Extreme Scalability (1000-D Causal Surgery)
+To demonstrate that complexity is an illusion when the theory is elegant, run the 1000-dimensional experiment:
+```bash
+python 1000_dim_surgical.py
 ```
 
 ---

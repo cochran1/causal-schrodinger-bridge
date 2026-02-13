@@ -50,10 +50,10 @@ Traditional Optimal Transport solvers scale cubically $O(d^3)$ or exponentially,
 
 ###  Empirical Scaling Audit
 
-| Metric | Traditional Baseline ($O(d^3)$) | **CSB (Ours)** ($O(d)$) | **Impact** |
+| Metric | Traditional Baseline | **CSB (Ours)** | **Impact** |
 | :--- | :---: | :---: | :--- |
 | **Complexity** | Cubic / Exponential | **Linear** | Theoretical Breakthrough |
-| **Execution Time** | $\approx$ 6.37 Years *(Extrapolated)* | **26.48 Seconds** | **7,592,786$\times$ Faster** |
+| **Execution Time** | $\approx$ 6.37 Years *(Extrapolated)* | **26.48 Seconds** | **7,592,786x Faster** |
 | **Memory** | OOM (Out of Memory) | **< 4GB VRAM** | Desktop Feasible |
 | **Recovery MSE** | N/A (Failed) | **0.0482** | High Fidelity |
 

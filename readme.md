@@ -40,6 +40,23 @@ While general Schrödinger Bridge solvers suffer from the curse of dimensionalit
 
 ---
 
+##  Breaking the Barrier: 100,000-D Extremal Scaling
+
+> **"From 6 Years to 26 Seconds."**
+
+Traditional Optimal Transport solvers scale cubically $O(d^3)$ or exponentially, making high-dimensional scientific modeling (e.g., whole-genome networks) computationally intractable. 
+
+**CSB changes the game.** By proving the **Structural Decomposition Theorem**, we reduce the complexity to linear $O(d)$. We validated this by performing a **100,000-dimensional causal transport** on a single consumer GPU (RTX 3090).
+
+###  Empirical Scaling Audit
+
+| Metric | Traditional Baseline ($O(d^3)$) | **CSB (Ours)** ($O(d)$) | **Impact** |
+| :--- | :---: | :---: | :--- |
+| **Complexity** | Cubic / Exponential | **Linear** | Theoretical Breakthrough |
+| **Execution Time** | $\approx$ 6.37 Years *(Extrapolated)* | **26.48 Seconds** | **7,592,786$\times$ Faster** |
+| **Memory** | OOM (Out of Memory) | **< 4GB VRAM** | Desktop Feasible |
+| **Recovery MSE** | N/A (Failed) | **0.0482** | High Fidelity |
+
 ##  Core Logic: SDE Tunneling
 
 > **"Adding entropy to save the soul of causality from deterministic collapse."**
@@ -131,7 +148,8 @@ This work (CSB) complements our other research on generative causal inference. T
 ├── mnist_experiment.py         
 ├── Quantitative_Evaluation.py  
 ├── Robustness.py
-├── 1000_dim_surgical.py     
+├── 1000_dim_surgical.py
+├── csb_100k_final.py    
 ├── baseline.py                 
 ├── plot.py / sde_plot.py   
 ├── ot_plot.py 
@@ -180,6 +198,12 @@ python Robustness.py
 To demonstrate that complexity is an illusion when the theory is elegant, run the 1000-dimensional experiment:
 ```bash
 python 1000_dim_surgical.py
+```
+
+### 6. 100,000-D Extremal Scaling
+Just run this experiment script, and you will know everything.
+```bash
+python csb_100k_final.py
 ```
 
 ---

@@ -221,7 +221,7 @@ python 1000_dim_surgical.py
 Just run this experiment script, and you will know everything.
 ```bash
 python csb_100k_final.py 
-python 10000_Intrinsic_Rank #Intrinsic_Rank=10000
+python 100000_Intrinsic_Rank #Intrinsic_Rank=100000
 ```
 
 ---

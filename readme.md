@@ -247,8 +247,8 @@ If you find this code or paper useful, please cite:
 
 ```bibtex
 @article{wu2026causal,
-  title={Causal Schrödinger Bridges: Constrained Optimal Transport on Structural Manifolds},
-  author={Wu, Rui and Li, Yongjun},
+  title={Causal Schr$\backslash$" odinger Bridges: Constrained Optimal Transport on Structural Manifolds},
+  author={Wu, Rui and YongJun, Li},
   journal={arXiv preprint arXiv:2602.08535},
   year={2026}
 }

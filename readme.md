@@ -71,7 +71,7 @@ We validated CSB on a system where every dimension is an active causal node ($In
 
 | Metric | Global MLP (Baseline) | **CSB (Structural Decomposed)** | **Impact** |
 | :--- | :---: | :---: | :--- |
-| **Complexity** | O(d) | **$O(d)$** | Linear Scalability |
+| **Complexity** | O(d) | **O(d)** | Linear Scalability |
 | **Execution Time** | 7.51 Seconds | **73.73 Seconds** | Supersonic Efficiency |
 | **Recovery MSE** | 0.3182 (Failed) | **0.0667 (Success)** | **Fidelity Breakthrough** |
 | **Parameters** | ~102 Million | **~12,000** | **9,000x More Efficient** |

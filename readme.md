@@ -23,14 +23,6 @@ While this repository contains the full experiments for the paper, we provide a 
 
 ---
 
-###  Confronting the Information Bottleneck
-
-Why does $10^5$ dimensions break standard AI? 
-* **The Pathology**: Forcing 100,000 independent causal signals through a global hidden layer (e.g., 512 units) creates a mathematical "choke point." It is impossible to compress this entropy without losing the signal.
-* **The CSB Solution**: Our `StructuralDecomposedJet` architecture utilizes 1D-Convolutions to strictly enforce the local causal graph. This allows the model to learn 100,000 independent transitions in parallel, bypassing the bottleneck entirely.
-
----
-
 ##  Scaling to the Edge: 1000-D Causal Surgery
 
 > **"If the theory is elegant enough, complexity is but a computational illusion."**
@@ -48,34 +40,39 @@ While general Schrödinger Bridge solvers suffer from the curse of dimensionalit
 
 ---
 
+###  Confronting the Information Bottleneck
+
+**Why does 100,000 dimensions break standard AI models?**
+
+* **The Pathology**: Forcing 100,000 independent causal signals through a global hidden layer (e.g., 512 units) creates a mathematical "choke point." It is information-theoretically impossible to compress this total entropy without losing the signal, resulting in stalled convergence (MSE $\approx$ 0.31).
+* **The CSB Solution**: Our `StructuralDecomposedJet` architecture utilizes local weight-shared kernels to strictly enforce the causal graph. This allows the model to learn 100,000 independent transitions in parallel, bypassing the bottleneck entirely and achieving high-fidelity reconstruction (MSE $\approx$ 0.06).
+
+---
+
 ##  Breaking the Barrier: 100,000-D Extremal Scaling
 
-> **"From 6 Years to 26 Seconds."**
+> **"From 6 Years to Sub-Minute Convergence."**
 
-Traditional Optimal Transport solvers scale cubically $O(d^3)$ or exponentially, making high-dimensional scientific modeling (e.g., whole-genome networks) computationally intractable. 
+Traditional Optimal Transport solvers scale cubically $O(d^3)$. **CSB** changes the game by proving the **Structural Decomposition Theorem**, reducing complexity to linear **$O(d)$**.
 
-**CSB changes the game.** By proving the **Structural Decomposition Theorem**, we reduce the complexity to linear $O(d)$. We validated this by performing a **100,000-dimensional causal transport** on a single consumer GPU (RTX 3090).
+###  Benchmark 1: Low-Rank Recovery (k=2)
+We embedded a 2D manifold into 100,000 dimensions. CSB recovers the topology while dense solvers remain computationally intractable.
 
-###  Empirical Scaling Audit
-
-| Metric | Traditional Baseline | **CSB (Ours)** | **Impact** |
+| Metric | Traditional Baseline | **CSB (Ours)** | Impact |
 | :--- | :---: | :---: | :--- |
-| **Complexity** | Cubic / Exponential | **Linear** | Theoretical Breakthrough |
-| **Execution Time** | $\approx$ 6.37 Years *(Extrapolated)* | **26.48 Seconds** | **7,592,786x Faster** |
-| **Memory** | OOM (Out of Memory) | **< 4GB VRAM** | Desktop Feasible |
-| **Recovery MSE** | N/A (Failed) | **0.0482** | High Fidelity |
+| **Execution Time** | $\approx$ 6.37 Years | **26.48 Seconds** | **7.5M x Faster** |
+| **Memory** | OOM | **< 4GB VRAM** | Desktop Feasible |
 
-Empirical Scaling Audit (100,000-D Full-Rank)
+###  Benchmark 2: Full-Rank Causal Chain (k=100,000)
+We confront the **Information Bottleneck** by forcing $10^5$ independent causal signals through the network. CSB bypasses the bottleneck via structural decomposition.
 
-We validated CSB on a system where every dimension is an active causal node ($Intrinsic Rank = 10^5$).
+| Metric | Global MLP (Baseline) | **CSB (Structural Decomposed)** |
+| :--- | :---: | :---: |
+| **Recovery MSE** | 0.3182 (Failed) | **0.0667 (Success)** |
+| **Execution Time** | 7.51 Seconds | **73.73 Seconds** |
+| **Parameters** | ~102 Million | **~12,000 (9,000x smaller)** |
 
-| Metric | Global MLP (Baseline) | **CSB (Structural Decomposed)** | **Impact** |
-| :--- | :---: | :---: | :--- |
-| **Complexity** | O(d) | **O(d)** | Linear Scalability |
-| **Execution Time** | 7.51 Seconds | **73.73 Seconds** | Supersonic Efficiency |
-| **Recovery MSE** | 0.3182 (Failed) | **0.0667 (Success)** | **Fidelity Breakthrough** |
-| **Parameters** | ~102 Million | **~12,000** | **9,000x More Efficient** |
-| **Status** | **Bottlenecked** | **Verified (Theorem 1)** | Structural Intelligence |
+---
 
 ##  Core Logic: SDE Tunneling
 

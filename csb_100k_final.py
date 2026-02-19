@@ -83,6 +83,16 @@ for step in range(STEPS):
 
 total_csb_time = time.time() - start_time
 
+# ==============================================================================
+# [SCIENTIFIC NOTE: EXTREMAL SCALING AUDIT]
+# The primary goal of this script is to empirically validate the linear O(d) 
+# complexity guaranteed by the Structural Decomposition Theorem. 
+# To rigorously benchmark the raw FLOPs and memory limits of the network 
+# at d=100,000 without integral solver overhead, we evaluate the model in its 
+# deterministic zero-noise limit (1-step ODE pushforward). 
+# For SDE tunneling dynamics, refer to `main.py` and `1000_dim_surgical.py`.
+# ==============================================================================
+
 with torch.no_grad():
     t_final = torch.ones(len(X0), 1).to(device)
     X_pred = X0 + model(t_final, X0)

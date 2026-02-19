@@ -53,6 +53,10 @@ class CausalVectorField(nn.Module):
         return self.net(torch.cat([x, t_embed], dim=1))
 
 def train_model(model, x0, x1, name="Model", train_sigma=0.2):
+# [SCIENTIFIC NOTE]
+# In the CSB formulation, `train_sigma` is not mere data augmentation. 
+# It acts as the targeted entropic regularization term derived from the Schrödinger Bridge, 
+# diffusing the target distribution slightly to guide the SDE tunneling through high-dimensional voids.
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     model.train()
     start_t = time.time()
